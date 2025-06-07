@@ -1,0 +1,25 @@
+{
+  "name": "Blast WebSocket Monitor",
+  "version": "1.0",
+  "description": "Monitors WebSocket communications with minigames-ws.blast.tv",
+  "manifest_version": 2,
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": true
+  },
+  "permissions": [
+    "<all_urls>",
+    "webRequest",
+    "webRequestBlocking",
+    "tabs",
+    "activeTab",
+    "debugger",
+    "storage"
+  ],
+  "web_accessible_resources": [
+    "popup.html",
+    "popup.js",
+    "playersFullInfo.json",
+    "countries.json"
+  ]
+}
