@@ -55,6 +55,6 @@ for (let i = 0; i < playersList.length; i++) {
     playersList[i].guessData = guessData; // Store guess data for each player
 }
 
-fs.writeFileSync('playersFullInfo.json', JSON.stringify(playersList, null, 2));
+fs.writeFileSync('../playersFullInfo.json', JSON.stringify(playersList, null, 2));
 
 })();

@@ -15,7 +15,11 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Load countries data first
     try {
         const response = await fetch(chrome.runtime.getURL('countries.json'));
+        if (!response.ok) {
+            throw new Error(`Failed to load countries data: ${response.status}`);
+        }
         countries = Object.values(await response.json());
+        console.log(`Loaded ${countries.length} countries`);
     } catch (error) {
         console.error('Error loading countries data:', error);
     }
@@ -113,64 +117,63 @@ function displayPlayers(players) {
     }
 }
 
-// Filter functions
 function countriesFilter(nationality) {
-    if (!countries) return; // Skip if countries data not loaded
-    
+    if (!countries) {
+        console.error('Countries data not loaded');
+        return;
+    }
+
     const result = nationality.result.toUpperCase();
     const countryValue = nationality.value.toUpperCase();
 
-    if (result === "CORRECT") {
+    if (result == "CORRECT") {
         filteredPlayers = filteredPlayers.filter(player => 
             player.guessData && player.guessData.nationality && 
-            player.guessData.nationality.value === countryValue);
+            player.guessData.nationality.value.toUpperCase() === countryValue);
     } else {
-        const country = countries.find(c => c.code === countryValue);
-        if (!country) return;
+        const country = countries.find(country => country.code === countryValue);
+        if (!country) {
+            console.error(`Country not found: ${countryValue}`);
+            return;
+        }
         
         const region = country.region;
-        
-        if (result === "INCORRECT") {
+        if(result == "INCORRECT") {
             filteredPlayers = filteredPlayers.filter(player => {
                 if (!player.guessData || !player.guessData.nationality) return false;
-                const playerCountry = countries.find(c => c.code === player.guessData.nationality.value);
+                const playerCountry = countries.find(country => country.code === player.guessData.nationality.value);
                 return playerCountry && playerCountry.region !== region;
             });
-        } else if (result === 'INCORRECT_CLOSE') {
+        } else if (result == 'INCORRECT_CLOSE') {
             filteredPlayers = filteredPlayers.filter(player => {
                 if (!player.guessData || !player.guessData.nationality) return false;
-                const playerCountry = countries.find(c => c.code === player.guessData.nationality.value);
+                const playerCountry = countries.find(country => country.code === player.guessData.nationality.value);
                 return playerCountry && playerCountry.region === region;
             });
         }
     }
 }
 
+
 function teamFilter(team) {
     const result = team.result.toUpperCase();
     let teamID = null;
-    if (team.data != null) {
+    if(team.data != null) {
         teamID = team.data.id;
     }
 
-    if (teamID == null) {
-        if (result === "CORRECT") {
-            filteredPlayers = filteredPlayers.filter(player => 
-                player.guessData && player.guessData.team && player.guessData.team.data == null);
-        } else if (result === "INCORRECT") {
-            filteredPlayers = filteredPlayers.filter(player => 
-                player.guessData && player.guessData.team && player.guessData.team.data != null);
+    if(teamID == null) {
+        if(result == "CORRECT") {
+            filteredPlayers = filteredPlayers.filter(player => player.guessData.team.data == null);
+        } else if(result == "INCORRECT") {
+            filteredPlayers = filteredPlayers.filter(player => player.guessData.team.data != null);
         }
     } else {
-        if (result === "CORRECT") {
-            filteredPlayers = filteredPlayers.filter(player => 
-                player.guessData && player.guessData.team && player.guessData.team.data != null && 
-                player.guessData.team.data.id === teamID);
+        if(result == "CORRECT") {
+            filteredPlayers = filteredPlayers.filter(player => player.guessData.team.data != null && player.guessData.team.data.id === teamID);
         }
-        else if (result === "INCORRECT") {
-            filteredPlayers = filteredPlayers.filter(player => 
-                player.guessData && player.guessData.team && 
-                (player.guessData.team.data == null || player.guessData.team.data.id !== teamID));
+        else if(result == "INCORRECT") {
+            filteredPlayers = filteredPlayers.filter(player => player.guessData.team.data == null || player.guessData.team.data.id !== teamID);
         }
     }
 }
@@ -179,15 +182,11 @@ function roleFilter(role) {
     const result = role.result.toUpperCase();
     const roleValue = role.value.toUpperCase();
 
-    if (result === "CORRECT") {
-        filteredPlayers = filteredPlayers.filter(player => 
-            player.guessData && player.guessData.role && 
-            player.guessData.role.value.toUpperCase() === roleValue);
+    if (result == "CORRECT") {
+        filteredPlayers = filteredPlayers.filter(player => player.guessData.role.value.toUpperCase() === roleValue);
     }
-    else if (result === "INCORRECT") {
-        filteredPlayers = filteredPlayers.filter(player => 
-            player.guessData && player.guessData.role && 
-            player.guessData.role.value.toUpperCase() !== roleValue);
+    else if (result == "INCORRECT") {
+        filteredPlayers = filteredPlayers.filter(player => player.guessData.role.value.toUpperCase() !== roleValue);
     }
 }
 
@@ -195,38 +194,25 @@ function ageFilter(age) {
     const result = age.result.toUpperCase();
     const ageValue = age.value;
 
-    if (result === "CORRECT") {
-        filteredPlayers = filteredPlayers.filter(player => 
-            player.guessData && player.guessData.age && 
-            player.guessData.age.value === ageValue);
+    if (result == "CORRECT") {
+        filteredPlayers = filteredPlayers.filter(player => player.guessData.age.value === ageValue);
     }
     else if (result.includes("LOW")) {
-        filteredPlayers = filteredPlayers.filter(player => 
-            player.guessData && player.guessData.age && 
-            player.guessData.age.value > ageValue);
+        filteredPlayers = filteredPlayers.filter(player => player.guessData.age.value > ageValue);
     } else if (result.includes("HIGH")) {
-        filteredPlayers = filteredPlayers.filter(player => 
-            player.guessData && player.guessData.age && 
-            player.guessData.age.value < ageValue);
+        filteredPlayers = filteredPlayers.filter(player => player.guessData.age.value < ageValue);
     }
 }
 
 function majorFilter(major) {
     const result = major.result.toUpperCase();
     const majorValue = major.value;
-    
-    if (result === "CORRECT") {
-        filteredPlayers = filteredPlayers.filter(player => 
-            player.guessData && player.guessData.majorAppearances && 
-            player.guessData.majorAppearances.value === majorValue);
+    if (result == "CORRECT") {
+        filteredPlayers = filteredPlayers.filter(player => player.guessData.majorAppearances.value === majorValue);
     } else if (result.includes("LOW")) {
-        filteredPlayers = filteredPlayers.filter(player => 
-            player.guessData && player.guessData.majorAppearances && 
-            player.guessData.majorAppearances.value > majorValue);
+        filteredPlayers = filteredPlayers.filter(player => player.guessData.majorAppearances.value > majorValue);
     } else if (result.includes("HIGH")) {
-        filteredPlayers = filteredPlayers.filter(player => 
-            player.guessData && player.guessData.majorAppearances && 
-            player.guessData.majorAppearances.value < majorValue);
+        filteredPlayers = filteredPlayers.filter(player => player.guessData.majorAppearances.value < majorValue);
     }
 }
 

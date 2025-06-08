@@ -140,22 +140,39 @@ chrome.debugger.onEvent.addListener(function(debuggeeId, message, params) {
             const payloadData = params.response.payloadData;
             
             // Using simple string search instead of JSON parsing for filtering
-            if (payloadData.includes('"nickname":"') && !payloadData.includes('"nickname":"****"')) {
+            if (payloadData.includes('"nickname":"')) {
                 console.log(`Message received on WebSocket ${params.requestId}:`);
                 
                 try {
                     const parsedData = JSON.parse(payloadData);
-                    if (parsedData.players && parsedData.players[1] && parsedData.players[1].guesses) {
-                        const listGuesses = parsedData.players[1].guesses;
-                        const lastGuesses = listGuesses[listGuesses.length - 1];  
-                        console.log(`Raw data: ${JSON.stringify(lastGuesses)}`);
-                        
-                        // Send the guess result to popup for filtering
-                        sendToPopup({
-                            type: 'guess-result',
-                            data: lastGuesses
-                        });
-                    }
+                    console.log(`Raw data: ${JSON.stringify(parsedData)}`);
+                    if(parsedData.players) {
+                        if ( parsedData.players[1] && parsedData.players[1].guesses) {
+                            const listGuesses = parsedData.players[1].guesses;
+                            const lastGuesses = listGuesses[listGuesses.length - 1];  
+                            console.log(`Raw data: ${JSON.stringify(lastGuesses)}`);
+                             if( lastGuesses != undefined && lastGuesses.nickname != '****') {
+                                sendToPopup({
+                                    type: 'guess-result',
+                                    data: lastGuesses
+                                });
+                                
+                            }
+                            console.log('use player 1 guesses');
+                        } else if ( parsedData.players[0] && parsedData.players[0].guesses) { 
+                            const listGuesses = parsedData.players[0].guesses;
+                            const lastGuesses = listGuesses[listGuesses.length - 1];  
+                            console.log(`Raw data: ${JSON.stringify(lastGuesses)}`);
+                            if( lastGuesses != undefined && lastGuesses.nickname != '****') {
+                                sendToPopup({
+                                    type: 'guess-result',
+                                    data: lastGuesses
+                                });
+                                
+                            }
+                            console.log('use player 0 guesses');
+                        }
+                    } 
                 } catch (e) {
                     console.error("Error extracting guess data:", e);
                 }
